@@ -17,11 +17,7 @@ from sc2.protocol import ConnectionAlreadyClosed
 # This lets python-sc2 connect to a ladder game.
 # Based on: https://github.com/Dentosal/python-sc2/blob/master/examples/run_external.py
 def run_ladder_game(args, bot):
-    if args.LadderServer == None:
-        host = "127.0.0.1"
-    else:
-        host = args.LadderServer
-
+    host = "127.0.0.1" if args.LadderServer is None else args.LadderServer
     host_port = args.GamePort
     lan_port = args.StartPort
 
@@ -45,7 +41,7 @@ def run_ladder_game(args, bot):
 async def join_ladder_game(
         host, port, players, realtime, portconfig, save_replay_as=None, step_time_limit=None, game_time_limit=None
 ):
-    ws_url = "ws://{}:{}/sc2api".format(host, port)
+    ws_url = f"ws://{host}:{port}/sc2api"
     ws_connection = await aiohttp.ClientSession().ws_connect(ws_url, timeout=120)
     client = Client(ws_connection)
     try:
@@ -55,7 +51,7 @@ async def join_ladder_game(
         # await client.leave()
         # await client.quit()
     except ConnectionAlreadyClosed:
-        logging.error(f"Connection was closed before the game ended")
+        logging.error("Connection was closed before the game ended")
         return None
     finally:
         await ws_connection.close()
@@ -76,8 +72,12 @@ def parse_arguments():
     parser.add_argument("--Sc2Version", type=str, help="The version of Starcraft 2 to load.")
     parser.add_argument("--ComputerRace", type=str, default="Terran",
                         help="Computer race. One of [Terran, Zerg, Protoss, Random]. Default is Terran. Only for local play.")
-    parser.add_argument("--ComputerDifficulty", type=str, default="VeryHard",
-                        help=f"Computer difficulty. One of [VeryEasy, Easy, Medium, MediumHard, Hard, Harder, VeryHard, CheatVision, CheatMoney, CheatInsane]. Default is VeryEasy. Only for local play.")
+    parser.add_argument(
+        "--ComputerDifficulty",
+        type=str,
+        default="VeryHard",
+        help="Computer difficulty. One of [VeryEasy, Easy, Medium, MediumHard, Hard, Harder, VeryHard, CheatVision, CheatMoney, CheatInsane]. Default is VeryEasy. Only for local play.",
+    )
     parser.add_argument("--Map", type=str, default="Simple64",
                         help="The name of the map to use. Default is Simple64. Only for local play.")
 
@@ -90,7 +90,6 @@ def parse_arguments():
     for unknown_arg in unknown_args:
         print(f"Unknown argument: {unknown_arg}")
 
-    # Set the OpponentId if it's not already set
     if args.OpponentId is None:
         if args.LadderServer:
             args.OpponentId = "None"

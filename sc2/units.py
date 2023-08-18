@@ -40,7 +40,7 @@ class Units(list):
         return UnitSelection(self, *args, **kwargs)
 
     def __iter__(self) -> Generator[Unit, None, None]:
-        return (item for item in super().__iter__())
+        return iter(super().__iter__())
 
     def select(self, *args, **kwargs):
         return UnitSelection(self, *args, **kwargs)
@@ -94,10 +94,7 @@ class Units(list):
         return bool(self)
 
     def find_by_tag(self, tag) -> Optional[Unit]:
-        for unit in self:
-            if unit.tag == tag:
-                return unit
-        return None
+        return next((unit for unit in self if unit.tag == tag), None)
 
     def by_tag(self, tag):
         unit = self.find_by_tag(tag)
@@ -111,9 +108,7 @@ class Units(list):
         return self[0]
 
     def take(self, n: int) -> Units:
-        if n >= self.amount:
-            return self
-        return self.subgroup(self[:n])
+        return self if n >= self.amount else self.subgroup(self[:n])
 
     @property
     def random(self) -> Unit:
@@ -127,9 +122,7 @@ class Units(list):
         """ Returns self if n >= self.amount. """
         if n < 1:
             return Units([], self._bot_object)
-        if n >= self.amount:
-            return self
-        return self.subgroup(random.sample(self, n))
+        return self if n >= self.amount else self.subgroup(random.sample(self, n))
 
     def in_attack_range_of(self, unit: Unit, bonus_distance: Union[int, float] = 0) -> Units:
         """
@@ -209,8 +202,10 @@ class Units(list):
         assert self, "Units object is empty"
         if isinstance(position, Unit):
             return min(
-                (unit1 for unit1 in self),
-                key=lambda unit2: self._bot_object._distance_squared_unit_to_unit(unit2, position),
+                self,
+                key=lambda unit2: self._bot_object._distance_squared_unit_to_unit(
+                    unit2, position
+                ),
             )
 
         distances = self._bot_object._distance_units_to_pos(self, position)
@@ -232,8 +227,10 @@ class Units(list):
         assert self, "Units object is empty"
         if isinstance(position, Unit):
             return max(
-                (unit1 for unit1 in self),
-                key=lambda unit2: self._bot_object._distance_squared_unit_to_unit(unit2, position),
+                self,
+                key=lambda unit2: self._bot_object._distance_squared_unit_to_unit(
+                    unit2, position
+                ),
             )
         distances = self._bot_object._distance_units_to_pos(self, position)
         return max(((unit, dist) for unit, dist in zip(self, distances)), key=lambda my_tuple: my_tuple[1])[0]
@@ -714,7 +711,7 @@ class UnitSelection(Units):
             assert all(isinstance(t, UnitTypeId) for t in selection), "Not all ids in selection are of type UnitTypeId"
             super().__init__((unit for unit in parent if unit.type_id in selection), parent._bot_object)
         elif selection is None:
-            super().__init__((unit for unit in parent), parent._bot_object)
+            super().__init__(iter(parent), parent._bot_object)
         else:
             assert isinstance(
                 selection, (UnitTypeId, set)

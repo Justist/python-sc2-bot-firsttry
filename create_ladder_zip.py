@@ -61,7 +61,7 @@ def zipdir(path: str, ziph: zipfile.ZipFile, remove_path: Optional[str] = None):
 
 
 def create_ladder_zip():
-    print(f"Creating ladder zip...")
+    print("Creating ladder zip...")
 
     # Remove previous archive
     if os.path.isfile(os.path.join(copy_zip_to_folder, zip_archive_name)):
@@ -71,10 +71,8 @@ def create_ladder_zip():
     files_to_zip = []
     directories_to_zip = []
 
-    f = open("ladderbots.json", "w+")
-    f.write(generate_ladderbots_json())
-    f.close()
-
+    with open("ladderbots.json", "w+") as f:
+        f.write(generate_ladderbots_json())
     for file in files_and_directories_to_zip:
         if not os.path.exists(file):
             raise ValueError(f"'{file}' does not exist.")
