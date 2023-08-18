@@ -23,7 +23,7 @@ class GameData:
         """
         :param data:
         """
-        ids = set(a.value for a in AbilityId if a.value != 0)
+        ids = {a.value for a in AbilityId if a.value != 0}
         self.abilities = {a.ability_id: AbilityData(self, a) for a in data.abilities if a.ability_id in ids}
         self.units = {u.unit_id: UnitTypeData(self, u) for u in data.units if u.available}
         self.upgrades = {u.upgrade_id: UpgradeData(self, u) for u in data.upgrades}
@@ -53,13 +53,12 @@ class GameData:
                 if unit.id == UnitTypeId.ZERGLING:
                     # HARD CODED: zerglings are generated in pairs
                     return Cost(unit.cost.minerals * 2, unit.cost.vespene * 2, unit.cost.time)
-                # Correction for morphing units, e.g. orbital would return 550/0 instead of actual 150/0
-                morph_cost = unit.morph_cost
-                if morph_cost:  # can be None
-                    return morph_cost
-                # Correction for zerg structures without morph: Extractor would return 75 instead of actual 25
-                return unit.cost_zerg_corrected
-
+                else:
+                    return (
+                        morph_cost
+                        if (morph_cost := unit.morph_cost)
+                        else unit.cost_zerg_corrected
+                    )
         for upgrade in self.upgrades.values():
             if upgrade.research_ability == ability:
                 return upgrade.cost
@@ -118,9 +117,7 @@ class AbilityData:
 
     @property
     def is_free_morph(self) -> bool:
-        if any(free in self._proto.link_name for free in FREE_ABILITIES):
-            return True
-        return False
+        return any((free in self._proto.link_name for free in FREE_ABILITIES))
 
     @property
     def cost(self) -> Cost:

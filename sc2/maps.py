@@ -7,11 +7,13 @@ from sc2.paths import Paths
 
 def get(name=None) -> Map:
     maps = []
-    for mapdir in (p for p in Paths.MAPS.iterdir()):
+    for mapdir in iter(Paths.MAPS.iterdir()):
         if mapdir.is_dir():
-            for mapfile in (p for p in mapdir.iterdir() if p.is_file()):
-                if mapfile.suffix == ".SC2Map":
-                    maps.append(Map(mapfile))
+            maps.extend(
+                Map(mapfile)
+                for mapfile in (p for p in mapdir.iterdir() if p.is_file())
+                if mapfile.suffix == ".SC2Map"
+            )
         elif mapdir.is_file():
             if mapdir.suffix == ".SC2Map":
                 maps.append(Map(mapdir))
